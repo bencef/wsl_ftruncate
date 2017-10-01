@@ -14,6 +14,7 @@ struct file {
 };
 
 int create_file(size_t);
+void try_truncate(struct file*, size_t);
 
 int create_file(size_t size)
 {
@@ -50,11 +51,31 @@ int create_file(size_t size)
   return fd;
 }
 
+void try_truncate(struct file *files, size_t len)
+{
+  size_t i;
+  int ret, error;
+
+  for(i = 0; i < len; ++i) {
+    ret = ftruncate(files[i].fd, 0);
+    if(ret == -1) {
+      error = errno;
+      fprintf(stderr, "ftruncate failed for %s: %s\n",
+              files[i].name,
+              strerror(error));
+    }
+  }
+}
+
 int main(int argc, char *argv[])
 {
   struct file files[] = {
     {"Content file", create_file(256)},
     {"Empty file",   create_file(0)}
   };
+  size_t len;
+
+  len = sizeof(files)/sizeof(files[0]);
+  try_truncate(files, len);
   return 0;
 }
